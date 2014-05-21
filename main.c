@@ -4,6 +4,6 @@
 #include <string.h>
 
 int main() {
-	printf("Hello, World! \n");
+	printf("Testing C compiler in Sublime\n");
 	return 0;
 }
