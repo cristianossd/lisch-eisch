@@ -52,6 +52,7 @@ _Bool consulta(int chave, char tipo_colisao) {
 	bool result = false;
 	int i=0, hash;
 
+	printf("Vai consultar\n");
 	switch (tipo_colisao) {
 		case 'l':
 			f = fopen("files/lisch.dat", "r+b");
@@ -73,9 +74,11 @@ _Bool consulta(int chave, char tipo_colisao) {
 	hash = hashing(chave);
 	fseek(f, hash*sizeof(Registro), SEEK_SET);
 	fread(&reg, sizeof(Registro), 1, f);
+	printf("Consultando %d %s Prox: %d\n", reg.chave, reg.nome, reg.prox);
 	while ((reg.chave != chave)&&(reg.prox != -1)) {
 		fseek(f, reg.prox*sizeof(Registro), SEEK_SET);
 		fread(&reg, sizeof(Registro), 1, f);
+		printf("Consultando %d %s Prox: %d\n", reg.chave, reg.nome, reg.prox);
 	}
 	fclose(f);
 	if (reg.chave == chave)
@@ -106,11 +109,18 @@ void reposicionar(char tipo_colisao) {
 		}
 		i--;
 	}
+	printf("********************\n");
+	imprimir(tipo_colisao);
+	printf("********************\n");
 	if (!result) {
 		r = -1;
 	}
 	fseek(f, TAMANHO_ARQUIVO*sizeof(Registro), SEEK_SET);
 	fwrite(&r, sizeof(int), 1, f);
+	printf("R agora é: %d\n", r);
+	printf("********************\n");
+	imprimir(tipo_colisao);
+	printf("********************\n");
 	fclose(f);
 }
 
@@ -118,6 +128,8 @@ void lisch(int chave, char *nome, int idade, int hash, int r) {
 	FILE *f;
 	Registro reg, novo_reg;
 	int prox_reg;
+
+	printf("Inserção com LISCH. O R aponta para %d\n", r);
 
 	f = fopen("files/lisch.dat", "r+b");
 	fseek(f, hash*sizeof(Registro), SEEK_SET);
@@ -127,9 +139,11 @@ void lisch(int chave, char *nome, int idade, int hash, int r) {
 		prox_reg = reg.prox;
 		fseek(f, prox_reg*sizeof(Registro), SEEK_SET);
 		fread(&reg, sizeof(Registro), 1, f);
+		printf("Usando o %d %s que esta em %d\n", reg.chave, reg.nome, prox_reg);
 	}
 
 	reg.prox = r;
+	printf("(pos: %d) Usando o %d %s apontado para %d\n", prox_reg, reg.chave, reg.nome, reg.prox);
 	fseek(f, prox_reg*sizeof(Registro), SEEK_SET);
 	fwrite(&reg, sizeof(Registro), 1, f);
 
@@ -138,11 +152,13 @@ void lisch(int chave, char *nome, int idade, int hash, int r) {
 	novo_reg.idade = idade;
 	novo_reg.prox = -1;
 	novo_reg.marcador = true;
+	printf("Antes. %d %s %d e vai para a pos: %d\n", novo_reg.chave, novo_reg.nome, novo_reg.idade, r);
 
 	fseek(f, r*sizeof(Registro), SEEK_SET);
 	fwrite(&novo_reg, sizeof(Registro), 1, f);
 	fseek(f, r*sizeof(Registro), SEEK_SET);
 	fread(&novo_reg, sizeof(Registro), 1, f);
+	printf("Depois de inserir. %d %s %d e foi para a pos: %d\n", novo_reg.chave, novo_reg.nome, novo_reg.idade, r);
 
 	fseek(f, TAMANHO_ARQUIVO*sizeof(Registro), SEEK_SET);
 	r = -1;
@@ -195,8 +211,10 @@ _Bool inserir(int chave, char *nome, int idade, char tipo_colisao) {
 	bool result;
 	int r, hash;
 
+	printf("Vai inserir\n");
 	result = consulta(chave, tipo_colisao);
 	if (result) {
+		printf("Chave ja existe\n");
 		return false;
 	}
 	else {
@@ -213,20 +231,26 @@ _Bool inserir(int chave, char *nome, int idade, char tipo_colisao) {
 		fread(&r, sizeof(int), 1, f);
 
 		if (r == -1) {
+			printf("O R ta setando vazio pq ta cheio\n");
+
 			return true;
 		}
 		else {
 			hash = hashing(chave);
+			printf("Hash de %d deu %d\n", chave, hash);
 			fseek(f, hash*sizeof(Registro), SEEK_SET);
 			fread(&reg, sizeof(Registro), 1, f);
+			printf("Calculou o hashing, verificando o marcador: %d\n", reg.marcador);
 			if (reg.marcador) {
 				fclose(f);
 				switch (tipo_colisao) {
 					case 'l':
 						lisch(chave, nome, idade, hash, r);
+						printf("Inseriu com conflito LISCH\n");
 						break;
 					case 'e':
 						eisch(chave, nome, idade, hash, r);
+						printf("Inseriu com conflito EISCH\n");
 						break;
 				}
 			}
@@ -239,6 +263,7 @@ _Bool inserir(int chave, char *nome, int idade, char tipo_colisao) {
 				fseek(f, hash*sizeof(Registro), SEEK_SET);
 				fwrite(&reg, sizeof(Registro), 1, f);
 				fclose(f);
+				printf("Inseriu normalmente!\n");
 			}
 
 			return true;
@@ -336,8 +361,10 @@ float media(char tipo_colisao) {
 		}
 	}
 	fclose(f);
+	printf("Qnt de registros: %f | Acesso total: %f\n", qtd, cont);
 	if (qtd >0) {
 		acesso = cont/qtd;
+		printf("Média deu: %f\n", acesso);
 		return acesso;
 	}
 	return 0;
@@ -356,12 +383,23 @@ void reinicializar(int pos, char tipo_colisao) {
 			break;
 	}
 
+	printf("Reinicialziando a posição :::::: %d\n", pos);
 	fseek(f, pos*sizeof(Registro), SEEK_SET);
 	fread(&reg, sizeof(Registro), 1, f);
 	reg.prox = -1;
 	reg.marcador = false;
+	printf("********************\n");
+	imprimir(tipo_colisao);
+	printf("********************\n");
+	printf("Reinicializando a posição: %d\n", pos);
 	fwrite(&reg, sizeof(Registro), 1, f);
+	printf("********************\n");
+	imprimir(tipo_colisao);
+	printf("********************\n");
 	fclose(f);
+	printf("********* saindo do reinicializar ***********\n");
+	imprimir(tipo_colisao);
+	printf("********************\n");
 }
 
 _Bool remover(int chave, char tipo_colisao) {
@@ -393,9 +431,18 @@ _Bool remover(int chave, char tipo_colisao) {
 			fread(&reg, sizeof(Registro), 1, f);
 			if (reg.chave == chave)
 				result = true;
+
+			printf("Primeiro while\n");
+			printf("********************\n");
+			imprimir(tipo_colisao);
+			printf("********************\n");
 		}
 
 		while (buraco != -1) {
+			printf("Segundo while\n");
+			printf("********************\n");
+			imprimir(tipo_colisao);
+			printf("********************\n");
 			// sei que a posição q tenho q remover esta sendo apontada pela var buraco
 			fseek(f, buraco*sizeof(Registro), SEEK_SET);
 			fread(&reg, sizeof(Registro), 1, f);
@@ -409,20 +456,27 @@ _Bool remover(int chave, char tipo_colisao) {
 			fseek(f, buraco*sizeof(Registro), SEEK_SET);
 			fread(&reg1, sizeof(Registro), 1, f);
 			while ((!result)&&(reg1.prox != -1)) {
+				printf("Terceiro while\n");
+				printf("********************\n");
+				imprimir(tipo_colisao);
+				printf("********************\n");
+
 				fseek(f, reg1.prox*sizeof(Registro), SEEK_SET);
 				provisorio = reg1.prox;
 				fread(&reg1, sizeof(Registro), 1, f);
-				if (hashing(reg1.chave) == buraco) {
+				if (hashing(reg1.chave) == hashing(reg.chave)) {
 					result = true;
 					substituto = provisorio;
 				}
 			}
 			if (substituto == -1) {
 				// fazer a linkagem
+				printf("Não tem substituto para ele, pos: %d\n", buraco);
 				caso = buraco;
 				i=0;
 				result = false;
 				while ((i<TAMANHO_ARQUIVO)&&(!result)) {
+					printf("Quarto while\n");
 					fseek(f, i*sizeof(Registro), SEEK_SET);
 					fread(&reg_linkador, sizeof(Registro), 1, f);
 					if (reg_linkador.prox == buraco) {
@@ -431,18 +485,22 @@ _Bool remover(int chave, char tipo_colisao) {
 					}
 					i++;
 				}
+				printf("********************\n");
+				imprimir(tipo_colisao);
+				printf("********************\n");
 				if (result) {
+					printf("Achou quem apontava pra ele \n");
 					fseek(f, buraco*sizeof(Registro), SEEK_SET);
 					fread(&reg_buraco, sizeof(Registro), 1, f);
-
+					
 					if (reg_buraco.prox != -1) {
 						linkado = reg_buraco.prox;
 
 						fseek(f, linkador*sizeof(Registro), SEEK_SET);
 						fread(&reg_linkador, sizeof(Registro), 1, f);
+
 						reg_linkador.prox = linkado;
 
-						fseek(f, linkador*sizeof(Registro), SEEK_SET);
 						fwrite(&reg_linkador, sizeof(Registro), 1, f);
 					}
 					else {
@@ -455,6 +513,9 @@ _Bool remover(int chave, char tipo_colisao) {
 					}
 				}
 				fclose(f);
+				printf("********************\n");
+				imprimir(tipo_colisao);
+				printf("********************\n");
 				reinicializar(buraco-1, tipo_colisao);
 
 				buraco = -1;
@@ -469,6 +530,8 @@ _Bool remover(int chave, char tipo_colisao) {
 				strcpy(reg2.nome, reg3.nome);
 				reg2.idade = reg3.idade;
 
+				printf("Reg2.chave %d%s\n", reg2.chave);
+
 				fseek(f, buraco*sizeof(Registro), SEEK_SET);
 				fwrite(&reg2, sizeof(Registro), 1, f);
 
@@ -480,6 +543,10 @@ _Bool remover(int chave, char tipo_colisao) {
 		fclose(f);
 		return false;
 	}
+	printf("Pouco antes de reposicionar\n");
+	printf("*************************\n");
+	imprimir(tipo_colisao);
+	printf("*************************\n");
 	reposicionar(tipo_colisao);
 	return true;
 }
@@ -497,6 +564,7 @@ int main() {
 		case 'l':
 			f = fopen("files/lisch.dat", "r+b");
 			if (f == NULL) {
+				printf("Criando o arquivo LISCH\n");
 				f = fopen("files/lisch.dat", "w+b");
 				fclose(f);
 				popular('l');
@@ -509,6 +577,7 @@ int main() {
 		case 'e':
 			f = fopen("files/eisch.dat", "r+b");
 			if (f == NULL) {
+				printf("Criando o arquivo EISCH\n");
 				f = fopen("files/eisch.dat", "w+b");
 				fclose(f);
 				popular('e');
@@ -538,10 +607,12 @@ int main() {
 				gets(nome);
 				scanf(" %d", &idade);
 
+				printf("Chamando funcao p inserir: %d %s %d\n", chave, nome, idade);
 				result = inserir(chave, nome, idade, tipo_colisao);
 				if (!result) {
 					printf("chave ja existente: %d\n", chave);
 				}
+				printf("Saiu da inserção\n");
 				break;
 			case 'c':
 				// Fluxo para consulta
