@@ -23,7 +23,7 @@ int hashing(int chave) {
 void popular(char tipo_colisao) {
 	FILE *f;
 	Registro reg;
-	int i, r = TAMANHO_ARQUIVO;
+	int i, r = TAMANHO_ARQUIVO-1;
 
 	switch (tipo_colisao) {
 		case 'l':
@@ -152,13 +152,24 @@ void lisch(int chave, char *nome, int idade, int hash, int r) {
 	fwrite(&novo_reg, sizeof(Registro), 1, f);
 	fseek(f, r*sizeof(Registro), SEEK_SET);
 	fread(&novo_reg, sizeof(Registro), 1, f);
-	printf("Antes. %d %s %d e foi para a pos: %d\n", novo_reg.chave, novo_reg.nome, novo_reg.idade, r);
+	printf("Depois de inserir. %d %s %d e foi para a pos: %d\n", novo_reg.chave, novo_reg.nome, novo_reg.idade, r);
 
 	fseek(f, TAMANHO_ARQUIVO*sizeof(Registro), SEEK_SET);
 	r = -1;
 	fwrite(&r, sizeof(int), 1, f);
 	fclose(f);
 	reposicionar('l');
+
+/*
+	Teste r´apido
+	f = fopen("files/lisch.dat", "r+b");
+	fseek(f, 10*sizeof(Registro), SEEK_SET);
+	fread(&novo_reg, sizeof(Registro), 1, f);
+	fseek(f, TAMANHO_ARQUIVO*sizeof(Registro), SEEK_SET);
+	fread(&r, sizeof(int), 1, f);
+	printf("Depois de reposicionar o R. %d %s %d e foi para a pos: %d\n", novo_reg.chave, novo_reg.nome, novo_reg.idade, r);
+	fclose(f);
+*/
 }
 
 void eisch(int chave, char *nome, int idade, int hash, int r) {
@@ -286,24 +297,37 @@ int main() {
 	Registro reg;
 	char tipo_colisao, opcao, nome[20];
 	int r, chave, idade, result;
+	bool fechado = false;
 
 	scanf(" %c", &tipo_colisao);
 	switch (tipo_colisao) {
 		case 'l':
 			f = fopen("files/lisch.dat", "r+b");
 			if (f == NULL) {
+				printf("Criando o arquivo LISCH\n");
 				f = fopen("files/lisch.dat", "w+b");
+				fclose(f);
+				popular('l');
+				fechado = true;
 			}
+			if (!fechado)
+				fclose(f);
+
 			break;
 		case 'e':
 			f = fopen("files/eisch.dat", "r+b");
 			if (f == NULL) {
+				printf("Criando o arquivo EISCH\n");
 				f = fopen("files/eisch.dat", "w+b");
+				fclose(f);
+				popular('e');
+				fechado = true;
 			}
+			if (!fechado)
+				fclose(f);
 			break;
 	}
-	fclose(f);
-	popular(tipo_colisao);
+	
 
 
 // Testes sobre o funcionamento da função popular
@@ -345,11 +369,14 @@ int main() {
 		scanf(" %c", &opcao);
 	}
 
+/*
+	Outro teste rápido
 	Registro teste;
 	f = fopen("files/lisch.dat", "r+b");
 	fseek(f, (TAMANHO_ARQUIVO-1)*sizeof(Registro), SEEK_SET);
 	fread(&teste, sizeof(Registro), 1, f);
 	printf("----- %d %s\n", teste.chave, teste.nome);
 	fclose(f);
+*/
 	return 0;
 }
