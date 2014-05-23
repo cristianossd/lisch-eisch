@@ -354,6 +354,7 @@ float media(char tipo_colisao) {
 			cont += 1;
 		}
 	}
+	fclose(f);
 	printf("Qnt de registros: %f | Acesso total: %f\n", qtd, cont);
 	if (qtd >0) {
 		acesso = cont/qtd;
@@ -361,6 +362,98 @@ float media(char tipo_colisao) {
 		return acesso;
 	}
 	return 0;
+}
+
+void reinicializar(int pos, tipo_colisao) {
+	FILE *f;
+	Registro reg;
+
+	switch (tipo_colisao) {
+		case 'l':
+			f = fopen("files/lisch.dat", "r+b");
+			break;
+		case 'e':
+			f = fopen("files/eisch.dat", "r+b");
+			break;
+	}
+
+	fseek(f, pos*sizeof(Registro), SEEK_SET);
+	fread(&reg, sizeof(Registro), 1, f);
+	reg.chave = NULL;
+	strcpy(reg.nome, "");
+	reg.idade = NULL;
+	reg.prox = -1;
+	fwrite(&reg, pos*sizeof(Registro), 1, f);
+	fclose(f);
+}
+
+_Bool remover(int chave, char tipo_colisao) {
+	FILE *f;
+	Registro reg, reg1, reg2;
+	int i, hash, buraco, caso, substituto = -1, provisorio;
+	bool result = false;
+
+	if (consulta(chave, tipo_colisao)) {
+		switch (tipo_colisao) {
+			case 'l':
+				f = fopen("files/lisch.dat", "r+b");
+				break;
+			case 'e':
+				f = fopen("files/eisch.dat", "r+b");
+				break;
+		}
+
+		hash = hashing(chave);
+		buraco = hash;
+		fseek(f, buraco*sizeof(Registro), SEEK_SET);
+		fread(&reg, sizeof(Registro), 1, f);
+		if (reg.chave == chave)
+			result = true;		
+
+		// acha o registro pra remover
+		while (!result) {
+			buraco = reg.prox;
+			fseek(f, buraco*sizeof(Registro), SEEK_SET);
+			fread(&reg, sizeof(Registro), 1, f);
+			if (reg.chave == chave)
+				result = true;
+		}
+
+		// sei que a posição q tenho q remover esta sendo apontada pela var buraco
+		fseek(f, buraco*sizeof(Registro), SEEK_SET);
+		fread(&reg, sizeof(Registro), 1, f);
+		strcpy(reg.nome, "aqui");
+
+		substituto = -1;
+		// anunciando qual registro tenho q substituir
+
+		// variavel substituto informa qual registro subsittuirá
+		result = false;
+		fseek(f, buraco*sizeof(Registro), SEEK_SET);
+		fread(&reg1, sizeof(Registro), 1, f);
+		while ((!result)&&(reg1.prox != -1)) {
+			fseek(f, reg1.prox*sizeof(Registro), SEEK_SET);
+			provisorio = reg1.prox;
+			fread(&reg1, sizeof(Registro), 1, f);
+			if (hashing(reg1.chave) == hashing(reg.chave)) {
+				result = true;
+				substituto = provisorio;
+			}
+		}
+		if (substituto == -1) {
+
+		}
+		else {
+			
+		}
+	}
+	else {
+		fclose(f);
+		return false;
+	}
+
+
+	// fechar o arquivo
 }
 
 int main() {
@@ -445,6 +538,14 @@ int main() {
 				// Fluxo para média de acesso
 				media_acesso = media(tipo_colisao);
 				printf("%.1f\n", media_acesso);
+				break;
+			case 'r':
+				// Fluxo para remoção
+				scanf(" %d", &chave);
+				result = remover(chave, tipo_colisao);
+				if (!result) {
+					printf("chave nao encontrada: %d\n", chave);
+				}
 				break;
 		}
 		scanf(" %c", &opcao);
