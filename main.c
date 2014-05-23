@@ -292,6 +292,37 @@ void imprime_chave(int chave, char tipo_colisao) {
 	fclose(f);	
 }
 
+void imprimir(char tipo_colisao) {
+	FILE *f;
+	Registro reg;
+	int i;
+
+	switch (tipo_colisao) {
+		case 'l':
+			f = fopen("files/lisch.dat", "r+b");
+			break;
+		case 'e':
+			f = fopen("files/eisch.dat", "r+b");
+			break;
+	}
+
+	for (i=0; i<TAMANHO_ARQUIVO; i++) {
+		fseek(f, i*sizeof(Registro), SEEK_SET);
+		fread(&reg, sizeof(Registro), 1, f);
+		if (reg.marcador) {
+			if (reg.prox == -1)
+				printf("%d: %d %s %d nulo\n", i, reg.chave, reg.nome, reg.idade);
+			else
+				printf("%d: %d %s %d %d\n", i, reg.chave, reg.nome, reg.idade, reg.prox);
+		}
+		else {
+			printf("%d: vazio\n", i);
+		}
+	}
+
+	fclose(f);
+}
+
 int main() {
 	FILE *f;
 	Registro reg;
@@ -364,6 +395,10 @@ int main() {
 				else {
 					printf("chave nao encontrada: %d\n", chave);
 				}
+				break;
+			case 'p':
+				// Fluxo para impressão do arquivo
+				imprimir(tipo_colisao);
 				break;
 		}
 		scanf(" %c", &opcao);
