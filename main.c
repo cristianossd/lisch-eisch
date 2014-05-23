@@ -323,12 +323,53 @@ void imprimir(char tipo_colisao) {
 	fclose(f);
 }
 
+float media(char tipo_colisao) {
+	FILE *f;
+	Registro reg, reg_apoio;
+	int i, hash;
+	float acesso, qtd=0, cont=0;
+
+	switch (tipo_colisao) {
+		case 'l':
+			f = fopen("files/lisch.dat", "r+b");
+			break;
+		case 'e':
+			f = fopen("files/eisch.dat", "r+b");
+			break;
+	}
+
+	for (i = 0; i < TAMANHO_ARQUIVO; i++) {
+		fseek(f, i*sizeof(Registro), SEEK_SET);
+		fread(&reg, sizeof(Registro), 1, f);
+		if (reg.marcador) {
+			qtd += 1;
+			hash = hashing(reg.chave);
+			fseek(f, hash*sizeof(Registro), SEEK_SET);
+			fread(&reg_apoio, sizeof(Registro), 1, f);
+			while (reg.chave != reg_apoio.chave) {
+				fseek(f, reg_apoio.prox*sizeof(Registro), SEEK_SET);
+				fread(&reg_apoio, sizeof(Registro), 1, f);
+				cont += 1;
+			}
+			cont += 1;
+		}
+	}
+	printf("Qnt de registros: %f | Acesso total: %f\n", qtd, cont);
+	if (qtd >0) {
+		acesso = cont/qtd;
+		printf("Média deu: %f\n", acesso);
+		return acesso;
+	}
+	return 0;
+}
+
 int main() {
 	FILE *f;
 	Registro reg;
 	char tipo_colisao, opcao, nome[20];
 	int r, chave, idade, result;
 	bool fechado = false;
+	float media_acesso;
 
 	scanf(" %c", &tipo_colisao);
 	switch (tipo_colisao) {
@@ -399,6 +440,11 @@ int main() {
 			case 'p':
 				// Fluxo para impressão do arquivo
 				imprimir(tipo_colisao);
+				break;
+			case 'm':
+				// Fluxo para média de acesso
+				media_acesso = media(tipo_colisao);
+				printf("%.1f\n", media_acesso);
 				break;
 		}
 		scanf(" %c", &opcao);
