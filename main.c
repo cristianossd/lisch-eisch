@@ -60,16 +60,6 @@ _Bool consulta(int chave, char tipo_colisao) {
 			f = fopen("files/eisch.dat", "r+b");
 			break;
 	}
-/*
-	while ((!result)&&(i<TAMANHO_ARQUIVO)) {
-		fseek(f, i*sizeof(Registro), SEEK_SET);
-		fread(&reg, sizeof(Registro), 1, f);
-		if (reg.chave == chave) {
-			result = true;
-		}
-		i++;
-	}
-*/
 	hash = hashing(chave);
 	fseek(f, hash*sizeof(Registro), SEEK_SET);
 	fread(&reg, sizeof(Registro), 1, f);
@@ -149,17 +139,6 @@ void lisch(int chave, char *nome, int idade, int hash, int r) {
 	fwrite(&r, sizeof(int), 1, f);
 	fclose(f);
 	reposicionar('l');
-
-/*
-	Teste r´apido
-	f = fopen("files/lisch.dat", "r+b");
-	fseek(f, 10*sizeof(Registro), SEEK_SET);
-	fread(&novo_reg, sizeof(Registro), 1, f);
-	fseek(f, TAMANHO_ARQUIVO*sizeof(Registro), SEEK_SET);
-	fread(&r, sizeof(int), 1, f);
-	printf("Depois de reposicionar o R. %d %s %d e foi para a pos: %d\n", novo_reg.chave, novo_reg.nome, novo_reg.idade, r);
-	fclose(f);
-*/
 }
 
 void eisch(int chave, char *nome, int idade, int hash, int r) {
@@ -520,16 +499,6 @@ int main() {
 				fclose(f);
 			break;
 	}
-	
-
-
-// Testes sobre o funcionamento da função popular
-/*	fopen("files/lisch.dat", "r+b");
-	fseek(f, TAMANHO_ARQUIVO*sizeof(Registro), SEEK_SET);
-	fread(&r, sizeof(int), 1, f);
-	printf("%d\n", r);
-	fclose(f);
-*/
 
 	scanf(" %c", &opcao);
 	while (opcao != 'e') {
@@ -576,15 +545,5 @@ int main() {
 		}
 		scanf(" %c", &opcao);
 	}
-
-/*
-	Outro teste rápido
-	Registro teste;
-	f = fopen("files/lisch.dat", "r+b");
-	fseek(f, (TAMANHO_ARQUIVO-1)*sizeof(Registro), SEEK_SET);
-	fread(&teste, sizeof(Registro), 1, f);
-	printf("----- %d %s\n", teste.chave, teste.nome);
-	fclose(f);
-*/
 	return 0;
 }
