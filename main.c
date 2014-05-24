@@ -462,8 +462,10 @@ _Bool remover(int chave, char tipo_colisao) {
 			else {
 				fseek(f, buraco*sizeof(Registro), SEEK_SET);
 				fread(&reg2, sizeof(Registro), 1, f);
+
 				fseek(f, substituto*sizeof(Registro), SEEK_SET);
 				fread(&reg3, sizeof(Registro), 1, f);
+
 
 				reg2.chave = reg3.chave;
 				strcpy(reg2.nome, reg3.nome);
